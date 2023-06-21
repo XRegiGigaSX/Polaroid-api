@@ -4,15 +4,29 @@ import User from '../models/user.js';
 import GoogleUser from '../models/googleUser.js';
 
 export const googleSignIn = async (req, res) => {
-    console.log("google server")
+    // console.log("google server")
     const user = req.body;
     try{
+        var email = user.email
         // const user = (localStorage.getItem('profileTemp'))
-        console.log(user);
+        
+        const existingUser = await GoogleUser.findOne({email})
+        if(existingUser) console.log(existingUser)
+        // if(existingUser) return res.status(200).json({message: "User not found"});
+        // console.log(user);
         const token = jwt.sign({email: user.email, id: user.sub }, 'test', {expiresIn: '1h'});
-        const result = await GoogleUser.create({email: user.email, name: `${user.fname} ${user.lname}`});
 
-        res.status(200).json({result, token});
+        // const result = await GoogleUser.create({email: user.email, name: `${user.fname} ${user.lname}`});
+        // res.status(200).json({result, token});
+
+        if(existingUser){
+            const result = existingUser
+            res.status(200).json({result, token});
+        }else{
+            const result = await GoogleUser.create({email: user.email, name: `${user.fname} ${user.lname}`});
+            res.status(200).json({result, token});
+        }
+
     }catch(err){
         res.status(500).json({message: "Something went wrong! Try again later."})
     }
@@ -24,8 +38,8 @@ export const signin = async (req, res) => {
     
     try {
         const existingUser = await User.findOne({email})
-        console.log(existingUser);
         if(!existingUser) return res.status(404).json({message: "User not found"});
+        // console.log(existingUser);
 
         const passCheck = await bcrypt.compare(password, existingUser.password);
         console.log(passCheck);
